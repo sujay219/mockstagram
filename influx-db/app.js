@@ -1,7 +1,7 @@
 // app.js
 
 const express = require('express');
-const { followers_bucket, bucket_average, Point, writeApi, queryApi, writeAverageBucketApi } = require('./influxdb');
+const { bucket_followers, bucket_average, Point, writeApi, queryApi, writeAverageBucketApi } = require('./influxdb');
 
 const PORT = 3004;
 
@@ -98,7 +98,7 @@ app.get('/influencer/:id/timeline', async (req, res) => {
     let average = null;
   
     const timelineQuery = `
-      from(bucket: "${followers_bucket}")
+      from(bucket: "${bucket_followers}")
         |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "follower_count")
         |> filter(fn: (r) => r.influencer_id == "${influencerId}")

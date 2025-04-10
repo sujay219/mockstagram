@@ -1,0 +1,42 @@
+1. Worker Node, Producer
+Kafka is used here
+    - as it handles high throughput (up to 16.7k rps), durable, horizontally scalable.
+
+Polls the Load Balancer/Task Coordinator to fetch a list of influencers to handle.
+
+Runs a scheduler (e.g., APScheduler) to fetch data for assigned influencers every minute.
+
+Posts new follower counts to a message queue.
+
+-- used setInterval() clearInterval() for cron job, but instead we can use cron library as well.
+
+2. Message Queue & Stream processor, Consumer
+
+Handles incoming follower count updates as events.
+Decouples data ingestion from data storage.
+
+Enables retries and fault tolerance, by writing the faulty writes into a file and periodically uploading that as well. (Failover case is not tested now)
+
+3. Database layer: InfluxDb
+Light-weight and faster for time-based queries.
+Other options:
+    TimescaleDb is another option which can be used, but it is slower than this.
+    Prometheus also is a great option but it is not for very long storage and it's pull based system.
+    In this we have used Kafka consumer to pass the stream of data
+
+4. Load Balancer / Task Coordinator
+Distributes influencer ranges among nodes using:
+
+Hash partitioning of influencer PKs.
+
+ZooKeeper / Redis / etcd for coordination.
+
+5. API Layer
+Exposes:
+
+Current follower count
+Historical time-series (for charting)
+Average follower count
+
+This is implemented inside the InfluxDb micro service only for now. Can be made separately.
+
