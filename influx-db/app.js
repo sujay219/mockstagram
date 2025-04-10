@@ -94,10 +94,10 @@ app.post('/write', async (req, res) => {
  */
 app.get('/influencer/:id/timeline', async (req, res) => {
     const influencerId = req.params.id;
-    const now = new Date();
-    
+    const timeline = [];
+    let average = null;
   
-    const fluxQuery = `
+    const timelineQuery = `
       from(bucket: "${followers_bucket}")
         |> range(start: -1h)
         |> filter(fn: (r) => r._measurement == "follower_count")
@@ -106,27 +106,61 @@ app.get('/influencer/:id/timeline', async (req, res) => {
         |> yield(name: "follower_count")
     `;
   
+    const averageQuery = `
+      from(bucket: "${bucket_average}")
+        |> range(start: -365d)
+        |> filter(fn: (r) => r._measurement == "follower_avg")
+        |> filter(fn: (r) => r.influencer_id == "${influencerId}")
+        |> filter(fn: (r) => r._field == "average")
+        |> last()
+    `;
+  
     try {
-      const results = [];
-      await queryApi.queryRows(fluxQuery, {
-        next(row, tableMeta) {
-          const obj = tableMeta.toObject(row);
-          results.push({
-            timestamp: obj._time,
-            follower_count: parseInt(obj._value)
-          });
-        },
-        error(error) {
-          console.error('Query failed', error);
-          res.status(500).json({ error: 'InfluxDB query failed' });
-        },
-        complete() {
-          res.json({
-            influencer_id: influencerId,
-            timeline: results
-          });
-        }
+      // Fetch timeline
+      const timelinePromise = new Promise((resolve, reject) => {
+        queryApi.queryRows(timelineQuery, {
+          next(row, tableMeta) {
+            const obj = tableMeta.toObject(row);
+            timeline.push({
+              timestamp: obj._time,
+              follower_count: parseInt(obj._value)
+            });
+          },
+          error(error) {
+            console.error('❌ Timeline query failed:', error);
+            reject(error);
+          }, complete() {
+            resolve()
+          }
+        })
       });
+  
+      // Fetch average
+      const averagePromise =  new Promise((resolve, reject) => {
+        queryApi.queryRows(averageQuery, {
+          next(row, tableMeta) {
+            const obj = tableMeta.toObject(row);
+            average = parseFloat(obj._value);
+            console.log(average)
+          },
+          error(error) {
+            console.error('❌ Average query failed:', error);
+            reject();
+          }, complete() {
+            resolve();
+          }
+        })
+      });
+  
+      await Promise.all([timelinePromise, averagePromise]);
+  
+      // Return combined response
+      res.json({
+        influencer_id: influencerId,
+        average_follower_count: average,
+        timeline
+      });
+  
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
