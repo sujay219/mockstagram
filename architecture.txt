@@ -1,0 +1,45 @@
+
+
+
+
+                      ┌───────────────────────────────┐
+                      │      Mockstagram API          │
+                      └───────────────────────────────┘
+                                   ▲
+                                   │
+                          [Polled every 1 min]
+                                   |
+                       +-----------------------------+
+                       |     Load Balancer /         |
+                       |     Task Coordinator        |
+                       +-------------+---------------+
+                                    |
+          ┌─────────────────────────┴──────────────────────────┐
+          │                                                    │
+    ┌──────▼──────┐                                    ┌────────▼────────┐
+    │ Kafka Poller│  (multiple replicas)              │  Kafka Broker    │
+    │ Microservice│  ─ polls influencer stats ───────►│  (Scalable)      │
+    └──────┬──────┘                                    └────────┬────────┘
+            │                                                    │
+            ▼                                                     ▼
+    ┌─────────────┐                                        ┌─────────────┐
+    │ Kafka Topic │ ◄────  follower data stream  ────────►│ Kafka Topic │
+    │   (Input)   │                                        │  (Optional) │
+    └────┬────────┘                                        └─────────────┘
+         |
+┌──────────────────────┐
+│ InfluxDB Microservice│
+│ (Consumes Kafka data │
+│  & writes to DB)     │
+└────────┬─────────────┘
+         │
+         ▼
+   ┌─────────────┐
+   │   InfluxDB  │ ◄─── Time-series follower data
+   └─────┬───────┘
+         │
+         ▼
+┌────────────────────────────┐
+│ API Layer (Optional)       │
+│ (Query influencer stats)   │
+└────────────────────────────┘
