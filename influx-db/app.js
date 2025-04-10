@@ -158,6 +158,7 @@ app.get('/influencer/:id/timeline', async (req, res) => {
       res.json({
         influencer_id: influencerId,
         average_follower_count: average,
+        current_follower_count: timeline.length > 0 ? timeline[timeline.length - 1].follower_count : null,
         timeline
       });
   
