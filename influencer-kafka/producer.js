@@ -21,7 +21,7 @@ async function sendMetrics(influencerId) {
       messages: [{ value: JSON.stringify(message) }],
     });
 
-    console.log("sending ", JSON.stringify(message));
+    // console.log("sending ", JSON.stringify(message));
 
     console.log(`✅ Sent data for influencer ${influencerId}`);
   } catch (err) {
@@ -30,9 +30,7 @@ async function sendMetrics(influencerId) {
 }
 
 async function run() {
-  console.log("initilizing producer..")
   await producer.connect();
-  console.log("initilized producer..")
 
   const influencerIds = ['1000006', '1000007', '1000008'];
 

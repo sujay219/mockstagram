@@ -24,7 +24,7 @@ app.post('/write', async (req, res) => {
                     .tag("influencer_id", influencer_id)
                     .intField("value", newValue)
                     .timestamp(new Date(isoString));
-                // console.log("writing", point);
+                console.log("writing follower point", point.fields.value);
                 writeApi.writePoint(point);
 
               // 2. Read from "average_count" bucket
@@ -74,7 +74,7 @@ app.post('/write', async (req, res) => {
                 .floatField("average", newAvg)
                 .intField("total_entries", newCount)
                 .timestamp(new Date(isoString)); // or new Date() if you prefer
-              console.log(">>writing avg point ", avgPoint);
+              console.log(">>writing avg point ", avgPoint.fields);
               writeAverageBucketApi.writePoint(avgPoint);
 
             }

@@ -40,3 +40,36 @@ Average follower count
 
 This is implemented inside the InfluxDb micro service only for now. Can be made separately.
 
+Things to be implemented:
+1. Containerization of producer/poller, consumer/populator/batch handler, 
+2. Using pm2 instead of node app.js
+3. Batch processing of failed case and optimization of that.
+4. Writing load testing framework.
+
+Query monitoring and calculations:
+1. influx db
+
+Push every 1000 followers in one go.
+
+USE _internal;
+SELECT * FROM "runtime" WHERE time > now() - 5m;
+SELECT * FROM "mem" WHERE time > now() - 5m;
+SELECT * FROM "queryExecutor" WHERE time > now() - 5m;
+
+2. Monitor the kafka failures and CPU usage of k8s pod.
+
+Set limit to kafka poller
+
+resources:
+  requests:
+    cpu: "100m"
+  limits:
+    cpu: "500m"
+
+Create a Horizontal pod autoscaler:
+- If average CPU usage across pods exceeds 50%, the HPA will scale ou
+kubectl autoscale deployment your-deployment-name \
+  --cpu-percent=70 \
+  --min=2 \
+  --max=50
+
